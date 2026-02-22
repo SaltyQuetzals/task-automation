@@ -122,17 +122,16 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           echo "run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
 
-      - name: Send SMS alert
+      - name: Send Discord notification
         if: steps.check-status.outputs.should_alert == 'true'
-        uses: dawidd6/action-send-mail@v4
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.ALERT_EMAIL_USER }}
-          password: ${{ secrets.ALERT_EMAIL_PASSWORD }}
-          subject: "ALERT: auto-scripts"
-          to: ${{ secrets.ALERT_SMS_GATEWAY }}
-          from: ${{ secrets.ALERT_EMAIL_USER }}
-          body: |
-            ${{ steps.check-status.outputs.message }}
-            RUN: ${{ steps.check-status.outputs.run_url }}
+        run: |
+          curl -X POST ${{ secrets.DISCORD_WEBHOOK_URL }} \
+            -H "Content-Type: application/json" \
+            -d '{
+              "content": "🚨 **auto-scripts Alert**",
+              "embeds": [{
+                "description": "${{ steps.check-status.outputs.message }}",
+                "url": "${{ steps.check-status.outputs.run_url }}",
+                "color": 15158332
+              }]
+            }'
