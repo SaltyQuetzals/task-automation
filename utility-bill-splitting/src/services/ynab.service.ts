@@ -115,13 +115,6 @@ export class YnabService {
     logger.debug({ transactionWrapper }, "Transaction structure");
 
     try {
-      this.client.scheduledTransactions.createScheduledTransaction(this.budgetId, {
-        scheduled_transaction: {
-          account_id: this.accountId,
-          date: billedDate || new Date().toISOString().split("T")[0]!,
-          frequency: 'never'
-        }
-      })
       const response = await this.client.transactions.createTransactions(this.budgetId, transactionWrapper);
 
       // Extract transaction ID from response

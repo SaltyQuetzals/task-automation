@@ -1,6 +1,6 @@
 {
   "name": "gas-bill-splitting",
-  "module": "index.ts",
+  "module": "src/index.ts",
   "type": "module",
   "dependencies": {
     "@auto-scripts/venmo": "workspace:*",
