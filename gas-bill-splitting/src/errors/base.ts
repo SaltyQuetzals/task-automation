@@ -15,7 +15,13 @@ export class GasBillError extends Error {
   override toString(): string {
     let result = `${this.name} [${this.step}]: ${this.message}`;
     if (this.cause) {
-      result += `\nCause: ${this.cause instanceof Error ? this.cause.message : String(this.cause)}`;
+      if (this.cause instanceof Error) {
+        result += `\nCause: ${this.cause.message}`;
+      } else if (typeof this.cause === "object") {
+        result += `\nCause: ${JSON.stringify(this.cause, null, 2)}`;
+      } else {
+        result += `\nCause: ${String(this.cause)}`;
+      }
     }
     return result;
   }
