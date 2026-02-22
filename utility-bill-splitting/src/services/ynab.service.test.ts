@@ -1,6 +1,7 @@
 import { test, expect } from "bun:test";
 import { YnabService } from "./ynab.service";
 import type { SplitItem } from "../types/bill";
+import type { Dollars, CategoryId } from "../types/domain";
 
 // Mock YNAB client
 const mockCreateResponse = {
@@ -12,23 +13,23 @@ const mockCreateResponse = {
 const mockDeleteResponse = undefined;
 
 test("YnabService.createTransaction - successfully creates transaction", async () => {
-  const service = new YnabService("test-key", "budget-123", "account-123", "reimburse-cat-123");
+  const service = new YnabService("test-key", "budget-123" as any, "account-123" as any, "reimburse-cat-123" as any);
 
   // Mock the API call
   service["client"].transactions.createTransactions = async () => mockCreateResponse as any;
 
   const splitItems: SplitItem[] = [
-    { description: "Water", amount: 100, yourShare: 50, categoryId: "water-cat" },
-    { description: "Electric", amount: 200, yourShare: 100, categoryId: "electric-cat" },
+    { description: "Water", amount: 100 as Dollars, yourShare: 50 as Dollars, categoryId: "water-cat" as CategoryId },
+    { description: "Electric", amount: 200 as Dollars, yourShare: 100 as Dollars, categoryId: "electric-cat" as CategoryId },
   ];
 
-  const transactionId = await service.createTransaction(splitItems, "2025-01-15");
+  const transactionId = await service.createTransaction(splitItems, "2025-01-15" as any);
 
   expect(transactionId).toBe("txn-123");
 });
 
 test("YnabService.createTransaction - handles transaction response from data.transaction", async () => {
-  const service = new YnabService("test-key", "budget-123", "account-123", "reimburse-cat-123");
+  const service = new YnabService("test-key", "budget-123" as any, "account-123" as any, "reimburse-cat-123" as any);
 
   // Mock alternative response structure
   service["client"].transactions.createTransactions = async () => ({
@@ -37,7 +38,7 @@ test("YnabService.createTransaction - handles transaction response from data.tra
     },
   }) as any;
 
-  const splitItems: SplitItem[] = [{ description: "Water", amount: 100, yourShare: 50 }];
+  const splitItems: SplitItem[] = [{ description: "Water", amount: 100 as Dollars, yourShare: 50 as Dollars }];
 
   const transactionId = await service.createTransaction(splitItems);
 
@@ -45,13 +46,13 @@ test("YnabService.createTransaction - handles transaction response from data.tra
 });
 
 test("YnabService.createTransaction - throws when no transaction ID in response", async () => {
-  const service = new YnabService("test-key", "budget-123", "account-123", "reimburse-cat-123");
+  const service = new YnabService("test-key", "budget-123" as any, "account-123" as any, "reimburse-cat-123" as any);
 
   service["client"].transactions.createTransactions = async () => ({
     data: {},
   }) as any;
 
-  const splitItems: SplitItem[] = [{ description: "Water", amount: 100, yourShare: 50 }];
+  const splitItems: SplitItem[] = [{ description: "Water", amount: 100 as Dollars, yourShare: 50 as Dollars }];
 
   try {
     await service.createTransaction(splitItems);
@@ -63,7 +64,7 @@ test("YnabService.createTransaction - throws when no transaction ID in response"
 });
 
 test("YnabService.createTransaction - handles rounding correctly", async () => {
-  const service = new YnabService("test-key", "budget-123", "account-123", "reimburse-cat-123");
+  const service = new YnabService("test-key", "budget-123" as any, "account-123" as any, "reimburse-cat-123" as any);
 
   let capturedTransaction: any;
   service["client"].transactions.createTransactions = async (_budgetId, wrapper) => {
@@ -72,8 +73,8 @@ test("YnabService.createTransaction - handles rounding correctly", async () => {
   };
 
   const splitItems: SplitItem[] = [
-    { description: "Water", amount: 100.33, yourShare: 50.165, categoryId: "water-cat" },
-    { description: "Electric", amount: 100.33, yourShare: 50.165, categoryId: "electric-cat" },
+    { description: "Water", amount: 100.33 as Dollars, yourShare: 50.165 as Dollars, categoryId: "water-cat" as CategoryId },
+    { description: "Electric", amount: 100.33 as Dollars, yourShare: 50.165 as Dollars, categoryId: "electric-cat" as CategoryId },
   ];
 
   await service.createTransaction(splitItems);

@@ -1,6 +1,7 @@
 import { test, expect, beforeEach, afterEach } from "bun:test";
 import { GeminiService } from "./gemini.service";
 import { setLogger, resetLogger } from "../lib/logger";
+import type { Dollars } from "../types/domain";
 
 // Suppress logger output during tests
 const noop = () => {};
@@ -50,7 +51,7 @@ test("GeminiService.extractBillData - successfully extracts bill data", async ()
   expect(result.categories.Electric).toBe(120.5);
   expect(result.dateDue).toBe("2025-01-15");
   // 50 + 120.5 + 5 category values of 1.0 = 175.5
-  expect(result.totalAmount).toBe(175.5);
+  expect(result.totalAmount).toBe(175.5 as Dollars);
 });
 
 test("GeminiService.extractBillData - handles missing dateDue", async () => {
@@ -108,7 +109,7 @@ test("GeminiService.extractBillData - calculates total amount correctly", async 
   const result = await service.extractBillData("fake-base64", ["Water", "Electric", "Wastewater"]);
 
   // 100.25 + 200.75 + 50 + 4 category values of 1.0 = 355
-  expect(result.totalAmount).toBe(355.0);
+  expect(result.totalAmount).toBe(355.0 as Dollars);
 });
 
 test("GeminiService.extractBillData - retries on timeout error", async () => {

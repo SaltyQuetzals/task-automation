@@ -1,5 +1,6 @@
 import { test, expect } from "bun:test";
 import { splitCosts } from "./cost-splitter";
+import type { Dollars } from "../types/domain";
 
 test("splitCosts - splits evenly between two parties", () => {
   const categories = {
@@ -9,11 +10,11 @@ test("splitCosts - splits evenly between two parties", () => {
 
   const result = splitCosts(categories);
 
-  expect(result.totalBill).toBe(300);
-  expect(result.yourShare).toBe(150);
-  expect(result.roommateShare).toBe(150);
+  expect(result.totalBill).toBe(300 as Dollars);
+  expect(result.yourShare).toBe(150 as Dollars);
+  expect(result.roommateShare).toBe(150 as Dollars);
   // Reimbursement is total - yourShare = what roommate owes
-  expect(result.reimbursementAmount).toBe(150);
+  expect(result.reimbursementAmount).toBe(150 as Dollars);
 });
 
 test("splitCosts - handles rounding correctly", () => {
@@ -23,11 +24,11 @@ test("splitCosts - handles rounding correctly", () => {
 
   const result = splitCosts(categories);
 
-  expect(result.totalBill).toBe(100.01);
-  expect(result.yourShare).toBe(50.01);
-  expect(result.roommateShare).toBe(50.005); // 100.01 / 2
+  expect(result.totalBill).toBe(100.01 as Dollars);
+  expect(result.yourShare).toBe(50.005 as Dollars);
+  expect(result.roommateShare).toBe(50.005 as Dollars); // 100.01 / 2
   // Reimbursement is total - yourShare
-  expect(result.reimbursementAmount).toBeCloseTo(50, 2);
+  expect(result.reimbursementAmount).toBeCloseTo(50.005, 2);
 });
 
 test("splitCosts - maps categories correctly", () => {
@@ -58,9 +59,9 @@ test("splitCosts - handles multiple items with various amounts", () => {
 
   const result = splitCosts(categories);
 
-  expect(result.totalBill).toBe(246.5);
+  expect(result.totalBill).toBe(246.5 as Dollars);
   expect(result.yourShare).toBeCloseTo(123.25, 1);
-  expect(result.roommateShare).toBe(123.25);
+  expect(result.roommateShare).toBeCloseTo(123.25, 1);
   // Reimbursement should equal roommate's share (with potential minor rounding)
   expect(result.reimbursementAmount).toBeCloseTo(123.25, 1);
 });
@@ -73,9 +74,9 @@ test("splitCosts - handles single item", () => {
   const result = splitCosts(categories);
 
   expect(result.items).toHaveLength(1);
-  expect(result.totalBill).toBe(100);
-  expect(result.yourShare).toBe(50);
-  expect(result.roommateShare).toBe(50);
+  expect(result.totalBill).toBe(100 as Dollars);
+  expect(result.yourShare).toBe(50 as Dollars);
+  expect(result.roommateShare).toBe(50 as Dollars);
 });
 
 test("splitCosts - handles zero amount items", () => {
@@ -86,8 +87,8 @@ test("splitCosts - handles zero amount items", () => {
 
   const result = splitCosts(categories);
 
-  expect(result.totalBill).toBe(100);
-  expect(result.yourShare).toBe(50);
+  expect(result.totalBill).toBe(100 as Dollars);
+  expect(result.yourShare).toBe(50 as Dollars);
 });
 
 test("splitCosts - maps defined category names to category IDs", () => {

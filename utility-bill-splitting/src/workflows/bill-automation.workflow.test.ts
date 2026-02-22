@@ -5,6 +5,7 @@ import type { GeminiService } from "../services/gemini.service";
 import type { YnabService } from "../services/ynab.service";
 import type { VenmoService } from "../services/venmo.service";
 import type { AppConfig } from "../types/schemas";
+import type { Dollars } from "../types/domain";
 
 // Create mock services
 function createMockPdfService(): PdfService {
@@ -17,11 +18,11 @@ function createMockGeminiService(): GeminiService {
   return {
     extractBillData: async () => ({
       categories: {
-        Water: 100,
-        Electric: 200,
+        Water: 100 as any,
+        Electric: 200 as any,
       },
-      dateDue: "2025-01-15",
-      totalAmount: 300,
+      dateDue: "2025-01-15" as any,
+      totalAmount: 300 as Dollars,
     }),
   } as unknown as GeminiService;
 }
@@ -45,13 +46,13 @@ function createMockConfig(): AppConfig {
     google: { apiKey: "test-key" },
     ynab: {
       apiKey: "test-key",
-      budgetId: "test-budget",
-      accountId: "test-account",
-      reimbursementCategoryId: "test-reimburse",
+      budgetId: "test-budget" as any,
+      accountId: "test-account" as any,
+      reimbursementCategoryId: "test-reimburse" as any,
     },
     venmo: {
       accessToken: "test-token",
-      recipientUserId: "test-user",
+      recipientUserId: "test-user" as any,
     },
     coaUtilities: {
       email: "test@example.com",
