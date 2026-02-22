@@ -125,13 +125,16 @@ jobs:
       - name: Send Discord notification
         if: steps.check-status.outputs.should_alert == 'true'
         run: |
+          MESSAGE=$(printf '%s' "${{ steps.check-status.outputs.message }}" | jq -Rs .)
           curl -X POST ${{ secrets.DISCORD_WEBHOOK_URL }} \
             -H "Content-Type: application/json" \
-            -d '{
-              "content": "🚨 **auto-scripts Alert**",
-              "embeds": [{
-                "description": "${{ steps.check-status.outputs.message }}",
-                "url": "${{ steps.check-status.outputs.run_url }}",
-                "color": 15158332
-              }]
-            }'
+            -d @- << EOF
+          {
+            "content": "🚨 **auto-scripts Alert**",
+            "embeds": [{
+              "description": $MESSAGE,
+              "url": "${{ steps.check-status.outputs.run_url }}",
+              "color": 15158332
+            }]
+          }
+          EOF
