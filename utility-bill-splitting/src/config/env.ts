@@ -16,7 +16,7 @@ export function loadConfig() {
       apiKey: process.env.YNAB_API_KEY || "",
       budgetId: process.env.YNAB_BUDGET_ID || "",
       accountId: process.env.YNAB_ACCOUNT_ID || "",
-      reimbursementCategoryId: process.env.YNAB_CATEGORY_REIMBURSEMENT || "",
+      reimbursementCategoryId: process.env.YNAB_REIMBURSEMENT_CATEGORY_ID || "",
     },
     venmo: dryRun
       ? undefined
