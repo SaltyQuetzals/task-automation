@@ -8,6 +8,7 @@ import { formatVenmoNote } from "../lib/formatters";
 import { downloadBill } from "../lib/download-bill";
 import { CATEGORY_MAPPING } from "../config/categories";
 import { logger } from "../lib/logger";
+import { toMilliunits, type DateString } from "../types/domain";
 
 /**
  * Main workflow for bill automation
@@ -60,8 +61,8 @@ export class BillAutomationWorkflow {
 
       // Step 4: Check for duplicate YNAB transaction
       logger.info("Checking for duplicate transactions...");
-      const totalBillMilliunits = Math.round(splitResult.totalBill * 1000);
-      const transactionDate = dateDue || new Date().toISOString().split("T")[0]!;
+      const totalBillMilliunits = toMilliunits(splitResult.totalBill);
+      const transactionDate = (dateDue || (new Date().toISOString().split("T")[0] as DateString)) as DateString;
 
       const existingTransactionId = await this.ynabService.findExistingTransaction(
         transactionDate,
@@ -79,7 +80,7 @@ export class BillAutomationWorkflow {
         // Create YNAB transaction if it doesn't exist
         ynabTransactionId = await this.ynabService.createTransaction(
           splitResult.items,
-          dateDue
+          dateDue as DateString | undefined
         );
 
         // Step 5: Send Venmo request only for new transactions

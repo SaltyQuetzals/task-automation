@@ -1,4 +1,10 @@
 import { AppConfigSchema } from "../types/schemas";
+import {
+  asBudgetId,
+  asAccountId,
+  asCategoryId,
+  asVenmoUserId,
+} from "../types/domain";
 import { CATEGORY_MAPPING } from "./categories";
 
 /**
@@ -43,7 +49,30 @@ export function loadConfig() {
     throw new Error(`Configuration validation failed:\n${result.error.message}`);
   }
 
-  return result.data;
+  const rawConfig = result.data;
+
+  // Convert and validate typed IDs
+  try {
+    return {
+      ...rawConfig,
+      ynab: {
+        ...rawConfig.ynab,
+        budgetId: asBudgetId(rawConfig.ynab.budgetId),
+        accountId: asAccountId(rawConfig.ynab.accountId),
+        reimbursementCategoryId: asCategoryId(rawConfig.ynab.reimbursementCategoryId),
+      },
+      venmo: rawConfig.venmo
+        ? {
+            ...rawConfig.venmo,
+            recipientUserId: asVenmoUserId(rawConfig.venmo.recipientUserId),
+          }
+        : undefined,
+    };
+  } catch (error) {
+    throw new Error(
+      `Configuration ID validation failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
 }
 
 export const config = loadConfig();

@@ -2,17 +2,18 @@ import * as ynab from "ynab";
 import type { SaveSubTransaction } from "ynab";
 import type { SplitItem } from "../types/bill";
 import { logger } from "../lib/logger";
+import { toMilliunits, type BudgetId, type AccountId, type CategoryId, type Milliunits, type DateString } from "../types/domain";
 
 /**
  * Service for YNAB API integration
  */
 export class YnabService {
   private client: ynab.API;
-  private budgetId: string;
-  private accountId: string;
-  private reimbursementCategoryId: string;
+  private budgetId: BudgetId;
+  private accountId: AccountId;
+  private reimbursementCategoryId: CategoryId;
 
-  constructor(apiKey: string, budgetId: string, accountId: string, reimbursementCategoryId: string) {
+  constructor(apiKey: string, budgetId: BudgetId, accountId: AccountId, reimbursementCategoryId: CategoryId) {
     this.client = new ynab.API(apiKey);
     this.budgetId = budgetId;
     this.accountId = accountId;
@@ -25,7 +26,7 @@ export class YnabService {
    * @param amountMilliunits - Transaction amount in milliunits
    * @returns Transaction ID if found, null otherwise
    */
-  async findExistingTransaction(date: string, amountMilliunits: number): Promise<string | null> {
+  async findExistingTransaction(date: DateString, amountMilliunits: Milliunits): Promise<string | null> {
     try {
       const response = await this.client.transactions.getTransactionsByAccount(
         this.budgetId,
@@ -63,27 +64,27 @@ export class YnabService {
 
   /**
    * Create a YNAB transaction with split categories
-   * @param splitItems - Array of split items with categories
+   * @param splitItems - Array of split items with categories (amounts in dollars)
    * @param billedDate - Date of the transaction (optional, defaults to today)
    * @returns Transaction ID if successful
    * @throws Error if transaction creation fails
    */
-  async createTransaction(splitItems: SplitItem[], billedDate?: string): Promise<string> {
+  async createTransaction(splitItems: SplitItem[], billedDate?: DateString): Promise<string> {
     logger.info("Creating YNAB transaction...");
 
-    // Calculate totals
+    // Calculate totals (amounts are in dollars, convert to milliunits for YNAB)
     const totalBill = splitItems.reduce((sum, item) => sum + item.amount, 0);
+    const totalBillMilliunits = toMilliunits(totalBill);
 
     // Sum all item shares (in milliunits) to handle rounding
-    const totalYourShareMilliunits = splitItems.reduce((sum, item) => sum + Math.round(item.yourShare * 1000), 0);
-    const totalBillMilliunits = Math.round(totalBill * 1000);
+    const totalYourShareMilliunits = splitItems.reduce((sum, item) => sum + toMilliunits(item.yourShare), 0);
 
     // Reimbursement is whatever's left after splitting items
     const reimbursementAmountMilliunits = totalBillMilliunits - totalYourShareMilliunits;
 
     // Prepare subtransactions for splits
     const subtransactions: SaveSubTransaction[] = splitItems.map((item) => ({
-      amount: Math.round(item.yourShare * 1000), // YNAB uses milliunits
+      amount: toMilliunits(item.yourShare), // YNAB uses milliunits
       payee_id: null,
       category_id: item.categoryId || "",
       memo: item.description,
@@ -101,11 +102,11 @@ export class YnabService {
     const transactionWrapper: ynab.PostTransactionsWrapper = {
       transaction: {
         account_id: this.accountId,
-        date: billedDate || new Date().toISOString().split("T")[0],
+        date: billedDate || (new Date().toISOString().split("T")[0] as DateString),
         payee_name: "Utilities Split",
         memo: "Automatically Created",
         category_id: null,
-        amount: Math.round(totalBill * 1000),
+        amount: totalBillMilliunits,
         cleared: ynab.TransactionClearedStatus.Uncleared,
         approved: false,
         subtransactions,
@@ -160,7 +161,7 @@ export class YnabService {
    * @param transactionId - ID of transaction to delete
    * @throws Error if deletion fails
    */
-  async deleteTransaction(transactionId: string): Promise<void> {
+  async deleteTransaction(transactionId: string): Promise<void> { // TODO: use TransactionId type when adopted everywhere
     logger.info(`Deleting YNAB transaction ${transactionId}...`);
 
     try {

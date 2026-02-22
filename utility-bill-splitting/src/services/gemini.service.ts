@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ExtractedItemsSchema } from "../types/schemas";
 import type { ExtractedBill } from "../types/bill";
 import { logger } from "../lib/logger";
+import type { Dollars } from "../types/domain";
 
 /**
  * Service for Google Gemini AI-powered bill data extraction
@@ -89,14 +90,14 @@ export class GeminiService {
         }
 
         // Calculate total amount
-        const totalAmount = validated["Clean Community Service"] + validated["Drainage Service"] + validated["Electric"] + validated["Solid Waste Services"] + validated["Street Service"] + validated["Wastewater"] + validated["Water"];
+        const totalAmountRaw = validated["Clean Community Service"] + validated["Drainage Service"] + validated["Electric"] + validated["Solid Waste Services"] + validated["Street Service"] + validated["Wastewater"] + validated["Water"];
 
         const { dateDue, ...categories } = validated;
 
         return {
           categories,
           dateDue,
-          totalAmount,
+          totalAmount: totalAmountRaw as Dollars,
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
