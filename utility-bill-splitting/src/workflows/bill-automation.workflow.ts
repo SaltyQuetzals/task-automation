@@ -91,6 +91,7 @@ export class BillAutomationWorkflow {
           splitResult.reimbursementAmount,
           note
         );
+        console.log("::notice::AUTO_ALERT_VENMO_SUCCESS");
       }
 
       // Success!

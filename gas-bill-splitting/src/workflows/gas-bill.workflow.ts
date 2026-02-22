@@ -70,6 +70,7 @@ export class GasBillWorkflow {
       );
 
       logger.info(`Venmo request sent: $${amountDollars.toFixed(2)}`);
+      console.log("::notice::AUTO_ALERT_VENMO_SUCCESS");
 
       // Step 6: Mark YNAB transaction as processed
       await this.ynabService.markAsProcessed(

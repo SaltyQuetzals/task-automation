@@ -31,6 +31,14 @@ jobs:
           DRY_RUN: 'false'
         run: bun run gas-bill-splitting/src/index.ts
 
+      - name: Upload gas-bill logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gas-bill-logs-${{ github.run_id }}
+          path: logs/
+          retention-days: 1
+
   run-utility-bill-splitting:
     runs-on: ubuntu-latest
     steps:
@@ -64,3 +72,67 @@ jobs:
           VENMO_RECIPIENT_USER_ID: ${{ secrets.VENMO_RECIPIENT_USER_ID }}
           DRY_RUN: 'false'
         run: bun run utility-bill-splitting/src/index.ts
+
+      - name: Upload utility-bill logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: utility-bill-logs-${{ github.run_id }}
+          path: logs/
+          retention-days: 1
+
+  notify-on-action-or-failure:
+    name: Notify on Action or Failure
+    runs-on: ubuntu-latest
+    needs: [run-gas-bill-splitting, run-utility-bill-splitting]
+    # Always run to check output, even if jobs fail
+    if: always()
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: job-logs
+
+      - name: Check for alerts
+        id: check-status
+        run: |
+          ALERT_MESSAGE=""
+          SHOULD_ALERT=false
+
+          # Check for failures
+          if [ "${{ needs.run-gas-bill-splitting.result }}" = "failure" ]; then
+            ALERT_MESSAGE="${ALERT_MESSAGE}Gas Bill Splitting: FAILED"$'\n'
+            SHOULD_ALERT=true
+          fi
+
+          if [ "${{ needs.run-utility-bill-splitting.result }}" = "failure" ]; then
+            ALERT_MESSAGE="${ALERT_MESSAGE}Utility Bill Splitting: FAILED"$'\n'
+            SHOULD_ALERT=true
+          fi
+
+          # Check for Venmo success in logs
+          if grep -r "AUTO_ALERT_VENMO_SUCCESS" job-logs/ 2>/dev/null; then
+            ALERT_MESSAGE="${ALERT_MESSAGE}✓ Venmo transaction created successfully"$'\n'
+            SHOULD_ALERT=true
+          fi
+
+          echo "should_alert=$SHOULD_ALERT" >> $GITHUB_OUTPUT
+          echo "message<<EOF" >> $GITHUB_OUTPUT
+          echo "$ALERT_MESSAGE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
+
+      - name: Send SMS alert
+        if: steps.check-status.outputs.should_alert == 'true'
+        uses: dawidd6/action-send-mail@v4
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.ALERT_EMAIL_USER }}
+          password: ${{ secrets.ALERT_EMAIL_PASSWORD }}
+          subject: "ALERT: auto-scripts"
+          to: ${{ secrets.ALERT_SMS_GATEWAY }}
+          from: ${{ secrets.ALERT_EMAIL_USER }}
+          body: |
+            ${{ steps.check-status.outputs.message }}
+            RUN: ${{ steps.check-status.outputs.run_url }}
