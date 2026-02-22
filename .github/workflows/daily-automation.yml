@@ -29,7 +29,7 @@ jobs:
           VENMO_ACCESS_TOKEN: ${{ secrets.VENMO_ACCESS_TOKEN }}
           VENMO_RECIPIENT_USER_ID: ${{ secrets.VENMO_RECIPIENT_USER_ID }}
           DRY_RUN: 'false'
-        run: bun run gas-bill-splitting/index.ts
+        run: bun run gas-bill-splitting/src/index.ts
 
   run-utility-bill-splitting:
     runs-on: ubuntu-latest
