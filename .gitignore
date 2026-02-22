@@ -1,0 +1,12 @@
+# dependencies (bun install)
+node_modules/
+bun.lock
+
+# logs
+logs/
+
+# MacOS
+.DS_Store
+
+# IDE
+.idea

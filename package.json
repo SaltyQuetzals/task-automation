@@ -1,0 +1,5 @@
+{
+  "name": "auto-scripts",
+  "private": true,
+  "workspaces": ["shared/venmo", "gas-bill-splitting", "utility-bill-splitting"]
+}

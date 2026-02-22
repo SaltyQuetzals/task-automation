@@ -119,7 +119,7 @@ export class YnabService {
         scheduled_transaction: {
           account_id: this.accountId,
           date: billedDate || new Date().toISOString().split("T")[0]!,
-
+          frequency: 'never'
         }
       })
       const response = await this.client.transactions.createTransactions(this.budgetId, transactionWrapper);

@@ -52,20 +52,8 @@ export const AppConfigSchema = z.object({
   }),
 });
 
-// Venmo API schemas
-export const VenmoPaymentSchema = z.object({
-  id: z.string(),
-  status: z.string(),
-  amount: z.number(),
-});
-
-export const VenmoResponseSchema = z.object({
-  data: z
-    .object({
-      payment: VenmoPaymentSchema.optional(),
-    })
-    .optional(),
-});
+// Venmo API schemas (re-exported from shared package)
+export { VenmoPaymentSchema, VenmoResponseSchema } from "@auto-scripts/venmo";
 
 // YNAB API schemas
 export const YnabTransactionResponseSchema = z.object({

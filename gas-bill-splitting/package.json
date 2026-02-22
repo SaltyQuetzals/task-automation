@@ -1,0 +1,16 @@
+{
+  "name": "gas-bill-splitting",
+  "module": "index.ts",
+  "type": "module",
+  "dependencies": {
+    "@auto-scripts/venmo": "workspace:*",
+    "ynab": "latest",
+    "zod": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
