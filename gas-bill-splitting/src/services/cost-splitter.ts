@@ -14,7 +14,8 @@ export class CostSplitterService {
     logger.info("Step 3: Calculating split amounts...");
 
     // Use integer arithmetic to avoid floating point rounding issues
-    const reimbursementAmount = Math.floor(totalAmount * GAS_AUTOMATION.SPLIT_RATIO) as Milliunits;
+    // For negative amounts, we need to round towards zero (use Math.trunc)
+    const reimbursementAmount = Math.trunc(totalAmount * GAS_AUTOMATION.SPLIT_RATIO) as Milliunits;
     const gasAmount = (totalAmount - reimbursementAmount) as Milliunits;
 
     logger.info(

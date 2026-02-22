@@ -137,18 +137,15 @@ export class YnabService {
     } catch (error) {
       let message = error instanceof Error ? error.message : String(error);
 
-      // Try to extract more detailed error info from YNAB SDK
-      if (error instanceof Error && error.message.includes("interceptors")) {
-        // This is likely an axios error from the YNAB SDK
-        const errorObj = error as unknown as Record<string, unknown>;
-        if (errorObj.response) {
-          const response = errorObj.response as Record<string, unknown>;
-          const data = response.data as Record<string, unknown>;
-          if (data?.error) {
-            message = `YNAB API Error: ${JSON.stringify(data.error)}`;
-          } else {
-            message = `YNAB API Error (${response.status}): ${JSON.stringify(data)}`;
-          }
+      // Try to extract more detailed error info from YNAB SDK (axios-based)
+      const errorObj = error as unknown as Record<string, unknown>;
+      if (errorObj?.response) {
+        const response = errorObj.response as Record<string, unknown>;
+        const data = response.data as Record<string, unknown>;
+        if (data?.error) {
+          message = `YNAB API Error: ${JSON.stringify(data.error)}`;
+        } else if (data) {
+          message = `YNAB API Error (${response.status}): ${JSON.stringify(data)}`;
         }
       }
 
