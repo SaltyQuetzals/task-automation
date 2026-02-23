@@ -122,19 +122,9 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           echo "run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
 
+      - name: Checkout for scripts
+        uses: actions/checkout@v4
+
       - name: Send Discord notification
         if: steps.check-status.outputs.should_alert == 'true'
-        run: |
-          MESSAGE=$(printf '%s' "${{ steps.check-status.outputs.message }}" | jq -Rs .)
-          curl -X POST ${{ secrets.DISCORD_WEBHOOK_URL }} \
-            -H "Content-Type: application/json" \
-            -d @- << EOF
-          {
-            "content": "🚨 **auto-scripts Alert**",
-            "embeds": [{
-              "description": $MESSAGE,
-              "url": "${{ steps.check-status.outputs.run_url }}",
-              "color": 15158332
-            }]
-          }
-          EOF
+        run: .github/scripts/notify-discord.sh "${{ steps.check-status.outputs.message }}" "${{ steps.check-status.outputs.run_url }}" "${{ secrets.DISCORD_WEBHOOK_URL }}"
