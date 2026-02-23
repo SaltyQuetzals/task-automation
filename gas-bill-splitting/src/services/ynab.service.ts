@@ -110,12 +110,12 @@ export class YnabService {
             category_id: null,
             subtransactions: [
               {
-                amount: -gasAmount,
+                amount: gasAmount,
                 category_id: gasCategoryId,
                 memo: GAS_AUTOMATION.CATEGORY_MEMOS.gas,
               },
               {
-                amount: -reimbursementAmount,
+                amount: reimbursementAmount,
                 category_id: reimbursementCategoryId,
                 memo: GAS_AUTOMATION.CATEGORY_MEMOS.reimbursement,
               },
