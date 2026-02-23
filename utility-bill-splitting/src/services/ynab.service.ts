@@ -28,19 +28,19 @@ export class YnabService {
    */
   async findExistingTransaction(date: DateString, amountMilliunits: Milliunits): Promise<string | null> {
     try {
-      const response = await this.client.transactions.getTransactionsByAccount(
-        this.budgetId,
-        this.accountId,
-        date
-      );
+      const [transactionsResponse, scheduledResponse] = await Promise.all([
+        this.client.transactions.getTransactionsByAccount(
+          this.budgetId,
+          this.accountId,
+          date
+        ),
+        this.client.scheduledTransactions.getScheduledTransactions(this.budgetId),
+      ]);
 
-      if (!response.data?.transactions) {
-        return null;
-      }
+      const transactions = transactionsResponse.data?.transactions || [];
+      const scheduledTransactions = scheduledResponse.data?.scheduled_transactions || [];
 
-      const transactions = response.data.transactions;
-
-      // Look for transactions on the same date with the same amount and utilities-related memo
+      // Search in regular transactions
       const existingTransaction = transactions.find((tx) => {
         const dateMatch = tx.date === date;
         const amountMatch = tx.amount === -amountMilliunits || tx.amount === amountMilliunits;
@@ -50,8 +50,22 @@ export class YnabService {
       });
 
       if (existingTransaction?.id) {
-        logger.warn(`Found existing transaction on ${date} with matching amount: ${existingTransaction.id}`);
+        logger.warn(`Found existing transaction on ${date}: ${existingTransaction.id} (amount: ${existingTransaction.amount})`);
         return existingTransaction.id;
+      }
+
+      // Search in scheduled transactions (use date_next for the scheduled date)
+      const existingScheduledTransaction = scheduledTransactions.find((tx) => {
+        const dateMatch = tx.date_next === date;
+        const amountMatch = tx.amount === -amountMilliunits || tx.amount === amountMilliunits;
+        const memoMatch = tx.memo && (tx.memo.includes("Utilities") || tx.memo.includes("Automatically Created"));
+
+        return dateMatch && amountMatch && memoMatch;
+      });
+
+      if (existingScheduledTransaction?.id) {
+        logger.warn(`Found existing scheduled transaction on ${date}: ${existingScheduledTransaction.id} (amount: ${existingScheduledTransaction.amount})`);
+        return existingScheduledTransaction.id;
       }
 
       return null;
@@ -113,7 +127,7 @@ export class YnabService {
       },
     };
 
-    logger.debug({ transactionWrapper }, "Transaction structure");
+    logger.debug(`Creating transaction with ${subtransactions.length} splits, total: ${totalBillMilliunits} milliunits (${totalBill} dollars)`);
 
     try {
       const response = await this.client.transactions.createTransactions(this.budgetId, transactionWrapper);
@@ -135,7 +149,7 @@ export class YnabService {
 
       return transactionId;
     } catch (error) {
-      let message = error instanceof Error ? error.message : String(error);
+      let message = error instanceof Error ? error.message : JSON.stringify(error);
 
       // Try to extract more detailed error info from YNAB SDK (axios-based)
       const errorObj = error as unknown as Record<string, unknown>;
@@ -147,6 +161,9 @@ export class YnabService {
         } else if (data) {
           message = `YNAB API Error (${response.status}): ${JSON.stringify(data)}`;
         }
+      } else if (errorObj && typeof errorObj === "object") {
+        // If we have an object but no response, try to get more details
+        message = JSON.stringify(errorObj);
       }
 
       throw new Error(`Failed to create YNAB transaction: ${message}`);
