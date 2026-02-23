@@ -10,3 +10,8 @@ logs/
 
 # IDE
 .idea
+
+# Environment variables with secrets - NEVER commit these!
+.env
+.env.local
+.env.*.local
