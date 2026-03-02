@@ -15,6 +15,10 @@ MESSAGE="$1"
 RUN_URL="$2"
 WEBHOOK_URL="$3"
 
+# Append the GitHub run link to the message
+MESSAGE="${MESSAGE}
+[View GitHub Run →]($RUN_URL)"
+
 # Escape the message as JSON
 MESSAGE_JSON=$(printf '%s' "$MESSAGE" | jq -Rs .)
 
@@ -26,7 +30,6 @@ curl -X POST "$WEBHOOK_URL" \
   "content": "🚨 **auto-scripts Alert**",
   "embeds": [{
     "description": $MESSAGE_JSON,
-    "url": "$RUN_URL",
     "color": 15158332
   }]
 }
