@@ -83,7 +83,7 @@ export class VenmoService {
   private buildPayload(recipientUserId: string, amount: number, note: string): VenmoRequestPayload {
     return {
       user_id: recipientUserId,
-      amount: -amount, // Negative for payment request
+      amount: amount,
       note,
       audience: "private",
       metadata: {
