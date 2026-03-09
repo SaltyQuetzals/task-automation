@@ -5,10 +5,9 @@ import type { VenmoService } from "../services/venmo.service";
 import type { AppConfig } from "../types/schemas";
 import { splitCosts } from "../lib/cost-splitter";
 import { formatVenmoNote } from "../lib/formatters";
-import { downloadBill } from "../lib/download-bill";
 import { CATEGORY_MAPPING } from "../config/categories";
 import { logger } from "../lib/logger";
-import { toMilliunits, type DateString } from "../types/domain";
+import { toMilliunits, asDateString } from "../types/domain";
 
 /**
  * Main workflow for bill automation
@@ -45,8 +44,15 @@ export class BillAutomationWorkflow {
       Object.entries(categories).forEach((item) => {
         logger.info(`  - ${item[0]}: $${item[1].toFixed(2)}`);
       });
-      if (dateDue) {
-        logger.info(`Due date: ${dateDue}`);
+      if (!dateDue) {
+        throw new Error("Could not extract due date from bill");
+      }
+      logger.info(`Due date: ${dateDue}`);
+      const today = new Date().toISOString().slice(0, 10);
+      if (today < dateDue) {
+        logger.warn(`Bill due date (${dateDue}) has not passed yet (today is ${today}). Skipping workflow.`);
+        console.log("::notice::AUTO_ALERT_BILL_NOT_YET_DUE");
+        return;
       }
 
       // Step 3: Split costs
@@ -62,7 +68,7 @@ export class BillAutomationWorkflow {
       // Step 4: Check for duplicate YNAB transaction
       logger.info("Checking for duplicate transactions...");
       const totalBillMilliunits = toMilliunits(splitResult.totalBill);
-      const transactionDate = (dateDue || (new Date().toISOString().split("T")[0] as DateString)) as DateString;
+      const transactionDate = asDateString(dateDue);
 
       const existingTransactionId = await this.ynabService.findExistingTransaction(
         transactionDate,
@@ -80,7 +86,7 @@ export class BillAutomationWorkflow {
         // Create YNAB transaction if it doesn't exist
         ynabTransactionId = await this.ynabService.createTransaction(
           splitResult.items,
-          dateDue as DateString | undefined
+          asDateString(dateDue)
         );
 
         // Step 5: Send Venmo request only for new transactions
