@@ -19,11 +19,15 @@ const IMAP_CONFIG = {
 
 const parseBillFromHtml = (html: string): Bill => {
     const amountMatch = html.match(/\$(\d+)\.<sup[^>]*>(\d+)<\/sup>/);
-    if (!amountMatch) throw new Error("Could not parse bill amount from TGS email");
+    if (!amountMatch) {
+        throw new Error("Could not parse bill amount from TGS email");
+    }
     const total = parseFloat(`${amountMatch[1]}.${amountMatch[2]}`);
 
     const dueDateMatch = html.match(/Due on ([A-Z][a-z]+ \d{1,2}, \d{4})/);
-    if (!dueDateMatch) throw new Error("Could not parse due date from TGS email");
+    if (!dueDateMatch) {
+        throw new Error("Could not parse due date from TGS email");
+    }
     const dueDate = new Date(dueDateMatch[1]!).toISOString().split("T")[0]!;
 
     const totalMilliunits = Math.round(total * 1000);
@@ -31,10 +35,10 @@ const parseBillFromHtml = (html: string): Bill => {
         dueDate,
         total,
         splits: {
-            "Reimbursements": Math.floor(totalMilliunits / 2),
-            "Gas": Math.ceil(totalMilliunits / 2)
-        }
-    }
+            Reimbursements: Math.floor(totalMilliunits / 2),
+            Gas: Math.ceil(totalMilliunits / 2),
+        },
+    };
 };
 
 export default async (): Promise<Bill> => {
@@ -44,20 +48,33 @@ export default async (): Promise<Bill> => {
     try {
         await client.mailboxOpen("INBOX");
 
-        const uids = await client.search({
-            from: "estatement@texasgasservice.com",
-            subject: "E-Statement",
-        }, { uid: true });
+        const uids = await client.search(
+            {
+                from: "estatement@texasgasservice.com",
+                subject: "E-Statement",
+            },
+            { uid: true },
+        );
 
-        if (!uids || uids.length === 0) throw new Error("No TGS E-Statement emails found in inbox");
+        if (!uids || uids.length === 0) {
+            throw new Error("No TGS E-Statement emails found in inbox");
+        }
 
         const latestUid = uids[uids.length - 1]!;
-        const message = await client.fetchOne(String(latestUid), { source: true }, { uid: true });
-        if (!message || !message.source) throw new Error("Failed to fetch TGS E-Statement email");
+        const message = await client.fetchOne(
+            String(latestUid),
+            { source: true },
+            { uid: true },
+        );
+        if (!message || !message.source) {
+            throw new Error("Failed to fetch TGS E-Statement email");
+        }
         const parsed = await simpleParser(message.source);
 
         const html = parsed.html;
-        if (!html) throw new Error("TGS E-Statement email has no HTML body");
+        if (!html) {
+            throw new Error("TGS E-Statement email has no HTML body");
+        }
 
         return parseBillFromHtml(html);
     } finally {
