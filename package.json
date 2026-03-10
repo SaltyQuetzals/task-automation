@@ -1,5 +1,21 @@
 {
   "name": "auto-scripts",
+  "module": "index.ts",
+  "type": "module",
   "private": true,
-  "workspaces": ["shared/venmo", "gas-bill-splitting", "utility-bill-splitting"]
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/mailparser": "^3.4.6"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "imapflow": "^1.2.13",
+    "mailparser": "^3.9.4",
+    "playwright": "^1.58.2",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "ynab": "^4.0.0"
+  }
 }

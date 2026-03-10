@@ -1,0 +1,15 @@
+export const CATEGORY_MAPPING = {
+  "Rent/Mortgage": process.env.YNAB_CATEGORY_RENT_MORTGAGE!,
+  "Clean Community Service": process.env.YNAB_CATEGORY_CLEAN_COMMUNITY_SERVICE!,
+  "Heidi Food": process.env.YNAB_CATEGORY_HEIDI_FOOD!,
+  "Heidi Vet/Bills": process.env.YNAB_CATEGORY_HEIDI_VET_BILLS!,
+  "Internet": process.env.YNAB_CATEGORY_INTERNET!,
+  "Street Service": process.env.YNAB_CATEGORY_STREET_SERVICE!,
+  "Drainage Service": process.env.YNAB_CATEGORY_DRAINAGE_SERVICE!,
+  "Solid Waste Services": process.env.YNAB_CATEGORY_SOLID_WASTE_SERVICES!,
+  "Water": process.env.YNAB_CATEGORY_WATER!,
+  "Electric": process.env.YNAB_CATEGORY_ELECTRIC!,
+  "Wastewater": process.env.YNAB_CATEGORY_WASTEWATER!,
+  "Gas": process.env.YNAB_CATEGORY_GAS!,
+  "Reimbursements": process.env.YNAB_CATEGORY_REIMBURSEMENTS!,
+};
