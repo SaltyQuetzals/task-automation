@@ -7,6 +7,7 @@ const envSchema = z.object({
   COA_UTILITIES_EMAIL: z.email(),
   COA_UTILITIES_PASSWORD: z.string().min(1),
   GOOGLE_GEN_AI_API_KEY: z.string().min(1),
+  VENMO_ACCESS_TOKEN: z.string().min(1),
   YNAB_CATEGORY_CLEAN_COMMUNITY_SERVICE: z.string().min(1),
   YNAB_CATEGORY_STREET_SERVICE: z.string().min(1),
   YNAB_CATEGORY_DRAINAGE_SERVICE: z.string().min(1),
