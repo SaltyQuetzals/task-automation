@@ -7,8 +7,3 @@ export type Bill = {
   totalCents: Cents;
   splitsCents: { [YNABCategory.Reimbursements]: Cents } & Partial<Record<YNABCategory, Cents>>;
 };
-
-export type Strategy = {
-  computeBill: () => Promise<Bill>;
-  ynabPayee: string;
-}
