@@ -1,9 +1,11 @@
 import { chromium } from "playwright";
-import type { Bill, Cents } from "./types";
-import { YNABCategory } from "./categories";
+import type { Bill, Cents } from "../types";
+import { YNABCategory } from "../categories";
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
 import { GoogleGenAI } from "@google/genai"
+import { Temporal } from "temporal-polyfill";
+import { env } from "../env";
 
 // As neither reimbursement amounts nor gas are contained within a
 // City of Austin utilities bill, we should exclude those as options
@@ -164,15 +166,15 @@ Extract all line items and the due date.`;
 
 export default async (): Promise<Bill> => {
     const uint8buf = await downloadBill(
-        process.env.COA_UTILITIES_EMAIL!,
-        process.env.COA_UTILITIES_PASSWORD!,
+        env.COA_UTILITIES_EMAIL,
+        env.COA_UTILITIES_PASSWORD,
     );
     const firstPage = await extractFirstPage(uint8buf.buffer);
-    const extracted = await extractBillData(process.env.GOOGLE_GEN_AI_API_KEY!, firstPage, allowedUtilityCategories);
+    const extracted = await extractBillData(env.GOOGLE_GEN_AI_API_KEY, firstPage, allowedUtilityCategories);
 
     const totalCents = Object.values(extracted.splits).reduce((acc, val) => acc + val, 0) as Cents;
     return {
-        dueDate: extracted.dateDue,
+        dueDate: Temporal.PlainDate.from(extracted.dateDue),
         totalCents,
         splitsCents: { ...extracted.splits, "Reimbursements": totalCents / 2 as Cents }
     }

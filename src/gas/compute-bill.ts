@@ -1,6 +1,8 @@
 import { ImapFlow } from "imapflow";
 import { simpleParser } from "mailparser";
-import type { Bill, Cents } from "./types";
+import type { Bill, Cents } from "../types";
+import { Temporal } from "temporal-polyfill";
+import { env } from "../env";
 
 // We use IMAP instead of Playwright because TGS has anti-botting
 // in place with reCaptcha. So we look at my Gmail inbox instead,
@@ -12,8 +14,8 @@ const IMAP_CONFIG = {
   port: 993,
   secure: true,
   auth: {
-    user: process.env.GMAIL_USER!,
-    pass: process.env.GMAIL_APP_PASSWORD!,
+    user: env.GMAIL_USER,
+    pass: env.GMAIL_APP_PASSWORD,
   },
 } as const;
 
@@ -32,7 +34,7 @@ const parseBillFromHtml = (html: string): Bill => {
 
   const totalCents = Math.round(total * 100) as Cents;
   return {
-    dueDate,
+    dueDate: Temporal.PlainDate.from(dueDate),
     totalCents: totalCents,
     splitsCents: {
       Reimbursements: Math.floor(totalCents / 2) as Cents,
