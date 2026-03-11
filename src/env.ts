@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 const envSchema = z.object({
-  DRY_RUN: z.boolean().default(true),
+  DRY_RUN: z
+    .string()
+    .transform((v) => v !== "false")
+    .default("true"),
   TZ: z.string().min(1),
   GMAIL_USER: z.email(),
   GMAIL_APP_PASSWORD: z.string().min(1),
