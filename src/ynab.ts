@@ -14,7 +14,7 @@ export const retrieveYNABTransaction = async (ynabAPI: ynab.API, bill: Bill, pay
   const transactions = response.data.transactions;
 
   const filtered = transactions
-    .filter(t => t.payee_name?.toLocaleLowerCase().includes(payee) && t.date === bill.dueDate.toString() && t.memo === memo)
+    .filter(t => t.payee_name?.toLocaleLowerCase().includes(payee) && t.date === bill.dueDate.toString() && t.memo === memo && t.amount === -bill.totalCents * 10)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return filtered[0] ?? null;
@@ -25,8 +25,7 @@ export const retrieveScheduledYNABTransaction = async (ynabAPI: ynab.API, bill: 
   const transactions = response.data.scheduled_transactions;
 
   const filtered = transactions
-    .filter(t => t.payee_name?.toLocaleLowerCase().includes(payee) && t.date_next === bill.dueDate.toString() && t.memo === memo)
-    .sort((a, b) => new Date(b.date_next).getTime() - new Date(a.date_next).getTime());
+    .filter(t => t.payee_name?.toLocaleLowerCase().includes(payee) && t.date_next === bill.dueDate.toString() && t.memo === memo && t.amount === -bill.totalCents * 10).sort((a, b) => new Date(b.date_next).getTime() - new Date(a.date_next).getTime());
 
   return filtered[0] ?? null;
 }
@@ -37,7 +36,7 @@ export const createScheduledYNABTransaction = async (ynabAPI: ynab.API, bill: Bi
       payee_name: payee.toLocaleUpperCase(),
       account_id: env.YNAB_ACCOUNT_ID,
       date: bill.dueDate.toString(),
-      amount: bill.totalCents * 10, // YNAB uses milliunits, not cents
+      amount: - bill.totalCents * 10, // YNAB uses milliunits, not cents
       frequency: 'never',
       memo
     }
@@ -53,16 +52,16 @@ export const createSplitYNABTransaction = async (ynabAPI: ynab.API, bill: Bill, 
       payee_name: payee.toLocaleUpperCase(),
       account_id: env.YNAB_ACCOUNT_ID,
       date: bill.dueDate.toString(),
-      amount: bill.totalCents * 10, // YNAB uses milliunits, not cents
+      amount: - bill.totalCents * 10, // YNAB uses milliunits, not cents
       subtransactions: Object.entries(bill.splitsCents).map(([key, cents]) => ({
-        amount: cents * 10, // YNAB uses milliunits, not cents
+        amount: - cents * 10, // YNAB uses milliunits, not cents
         category_id: CATEGORY_MAPPING[key as YNABCategory]
       })),
       memo
     }
   });
 
-  const {transaction} = createResponse.data;
+  const { transaction } = createResponse.data;
 
   if (!transaction) {
     throw new Error('Failed to create split YNAB transaction');
