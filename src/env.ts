@@ -21,6 +21,7 @@ const envSchema = z.object({
   YNAB_REIMBURSEMENT_CATEGORY_ID: z.string().min(1),
   YNAB_API_KEY: z.string().min(1),
   YNAB_ACCOUNT_ID: z.string().min(1),
+  DISCORD_WEBHOOK_URL: z.url(),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -6,6 +6,7 @@ import * as ynab from "ynab";
 import { createScheduledYNABTransaction, createSplitYNABTransaction, isScheduledTransaction, retrieveScheduledYNABTransaction, retrieveYNABTransaction } from "./ynab";
 import { STRATEGIES, type Strategy } from "./strategies";
 import { VenmoClient } from "./lib/venmo";
+import { sendDiscordNotification } from "./lib/discord";
 
 const MEMO = "Automatically Created";
 
@@ -38,7 +39,7 @@ export const updateYNAB = async (ynabAPI: ynab.API, payee: string, bill: Bill, t
   return txn;
 }
 
-export const createVenmoRequest = async (venmoClient: VenmoClient, reimbursementCents: Cents, note: string) => {
+export const createVenmoRequest = async (venmoClient: VenmoClient, reimbursementCents: Cents, note: string): Promise<'venmo-sent' | 'venmo-skipped'> => {
   // Venmo expects dollars, not cents
   const reimbursementDollars = reimbursementCents / 100;
 
@@ -46,21 +47,22 @@ export const createVenmoRequest = async (venmoClient: VenmoClient, reimbursement
 
   if (existingRequest !== null) {
     console.log('Request has already been made previously. Exiting early to avoid duplicate charge request.');
-    return;
+    return 'venmo-skipped';
   }
 
-  await venmoClient.sendPaymentRequest(env.VENMO_RECIPIENT_USER_ID, reimbursementDollars, note)
+  await venmoClient.sendPaymentRequest(env.VENMO_RECIPIENT_USER_ID, reimbursementDollars, note);
+  return 'venmo-sent';
 }
 
-export const updateExternalSources = async (venmoClient: VenmoClient, ynabAPI: ynab.API, bill: Bill, strategy: Strategy, today: Temporal.PlainDate) => {
+export const updateExternalSources = async (venmoClient: VenmoClient, ynabAPI: ynab.API, bill: Bill, strategy: Strategy, today: Temporal.PlainDate): Promise<'scheduled' | 'venmo-sent' | 'venmo-skipped'> => {
   const txn = await updateYNAB(ynabAPI, strategy.ynabPayee, bill, today);
 
   if (isScheduledTransaction(txn)) {
     console.log('Due date has yet to pass. No Venmo needed. Exiting.')
-    return;
+    return 'scheduled';
   };
 
-  await createVenmoRequest(venmoClient, bill.splitsCents.Reimbursements, strategy.note(bill));
+  return createVenmoRequest(venmoClient, bill.splitsCents.Reimbursements, strategy.note(bill));
 }
 
 const workflow = async (mode: "gas" | "utilities") => {
@@ -71,7 +73,8 @@ const workflow = async (mode: "gas" | "utilities") => {
   const ynabAPI = new ynab.API(env.YNAB_API_KEY);
   const today = Temporal.Now.plainDateISO(env.TZ);
 
-  await updateExternalSources(venmoClient, ynabAPI, bill, strategy, today);
+  const status = await updateExternalSources(venmoClient, ynabAPI, bill, strategy, today);
+  return { bill, status };
 };
 
 const [, , command] = process.argv;
@@ -86,7 +89,21 @@ const main = async () => {
     );
   }
 
-  await workflow(command);
+  try {
+    const { bill, status } = await workflow(command);
+    const totalDollars = (bill.totalCents / 100).toFixed(2);
+    const reimbursementDollars = (bill.splitsCents.Reimbursements / 100).toFixed(2);
+    const message = [
+      `✅ **${command} run succeeded**`,
+      `Due: ${bill.dueDate}  |  Total: $${totalDollars}  |  Reimbursement: $${reimbursementDollars}`,
+      `Status: ${status}`,
+    ].join('\n');
+    await sendDiscordNotification(env.DISCORD_WEBHOOK_URL, message, true);
+  } catch (err) {
+    const message = `❌ **${command} run failed**\n${err instanceof Error ? err.message : String(err)}`;
+    await sendDiscordNotification(env.DISCORD_WEBHOOK_URL, message, false);
+    process.exit(1);
+  }
 };
 
 if (import.meta.main) {

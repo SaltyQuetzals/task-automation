@@ -23,13 +23,27 @@ jobs:
       - name: Run gas bill splitting
         env:
           YNAB_API_KEY: ${{ secrets.YNAB_API_KEY }}
-          YNAB_BUDGET_ID: ${{ vars.YNAB_BUDGET_ID }}
+          YNAB_ACCOUNT_ID: ${{ vars.YNAB_ACCOUNT_ID }}
           YNAB_GAS_CATEGORY_ID: ${{ vars.YNAB_GAS_CATEGORY_ID }}
           YNAB_REIMBURSEMENT_CATEGORY_ID: ${{ vars.YNAB_REIMBURSEMENT_CATEGORY_ID }}
+          YNAB_CLEAN_COMMUNITY_SERVICE_CATEGORY_ID: ${{ vars.YNAB_CLEAN_COMMUNITY_SERVICE_CATEGORY_ID }}
+          YNAB_STREET_SERVICE_CATEGORY_ID: ${{ vars.YNAB_STREET_SERVICE_CATEGORY_ID }}
+          YNAB_DRAINAGE_SERVICE_CATEGORY_ID: ${{ vars.YNAB_DRAINAGE_SERVICE_CATEGORY_ID }}
+          YNAB_SOLID_WASTE_SERVICES_CATEGORY_ID: ${{ vars.YNAB_SOLID_WASTE_SERVICES_CATEGORY_ID }}
+          YNAB_WATER_CATEGORY_ID: ${{ vars.YNAB_WATER_CATEGORY_ID }}
+          YNAB_ELECTRIC_CATEGORY_ID: ${{ vars.YNAB_ELECTRIC_CATEGORY_ID }}
+          YNAB_WASTEWATER_CATEGORY_ID: ${{ vars.YNAB_WASTEWATER_CATEGORY_ID }}
           VENMO_ACCESS_TOKEN: ${{ secrets.VENMO_ACCESS_TOKEN }}
           VENMO_RECIPIENT_USER_ID: ${{ secrets.VENMO_RECIPIENT_USER_ID }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          COA_UTILITIES_EMAIL: ${{ secrets.COA_UTILITIES_EMAIL }}
+          COA_UTILITIES_PASSWORD: ${{ secrets.COA_UTILITIES_PASSWORD }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TZ: ${{ vars.TZ }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DRY_RUN: 'false'
-        run: bun run gas-bill-splitting/src/index.ts
+        run: bun src/index.ts gas
 
       - name: Upload gas-bill logs
         if: always()
@@ -57,21 +71,28 @@ jobs:
 
       - name: Run utility bill splitting
         env:
-          # YNAB Configuration
           YNAB_API_KEY: ${{ secrets.YNAB_API_KEY }}
-          YNAB_BUDGET_ID: ${{ vars.YNAB_BUDGET_ID }}
           YNAB_ACCOUNT_ID: ${{ vars.YNAB_ACCOUNT_ID }}
+          YNAB_GAS_CATEGORY_ID: ${{ vars.YNAB_GAS_CATEGORY_ID }}
           YNAB_REIMBURSEMENT_CATEGORY_ID: ${{ vars.YNAB_REIMBURSEMENT_CATEGORY_ID }}
-          # Google Gemini Configuration
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          # COA Utilities Credentials
-          COA_UTILITIES_EMAIL: ${{ secrets.COA_UTILITIES_EMAIL }}
-          COA_UTILITIES_PASSWORD: ${{ secrets.COA_UTILITIES_PASSWORD }}
-          # Venmo Configuration
+          YNAB_CLEAN_COMMUNITY_SERVICE_CATEGORY_ID: ${{ vars.YNAB_CLEAN_COMMUNITY_SERVICE_CATEGORY_ID }}
+          YNAB_STREET_SERVICE_CATEGORY_ID: ${{ vars.YNAB_STREET_SERVICE_CATEGORY_ID }}
+          YNAB_DRAINAGE_SERVICE_CATEGORY_ID: ${{ vars.YNAB_DRAINAGE_SERVICE_CATEGORY_ID }}
+          YNAB_SOLID_WASTE_SERVICES_CATEGORY_ID: ${{ vars.YNAB_SOLID_WASTE_SERVICES_CATEGORY_ID }}
+          YNAB_WATER_CATEGORY_ID: ${{ vars.YNAB_WATER_CATEGORY_ID }}
+          YNAB_ELECTRIC_CATEGORY_ID: ${{ vars.YNAB_ELECTRIC_CATEGORY_ID }}
+          YNAB_WASTEWATER_CATEGORY_ID: ${{ vars.YNAB_WASTEWATER_CATEGORY_ID }}
           VENMO_ACCESS_TOKEN: ${{ secrets.VENMO_ACCESS_TOKEN }}
           VENMO_RECIPIENT_USER_ID: ${{ secrets.VENMO_RECIPIENT_USER_ID }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          COA_UTILITIES_EMAIL: ${{ secrets.COA_UTILITIES_EMAIL }}
+          COA_UTILITIES_PASSWORD: ${{ secrets.COA_UTILITIES_PASSWORD }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TZ: ${{ vars.TZ }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DRY_RUN: 'false'
-        run: bun run utility-bill-splitting/src/index.ts
+        run: bun src/index.ts utilities
 
       - name: Upload utility-bill logs
         if: always()
@@ -80,51 +101,3 @@ jobs:
           name: utility-bill-logs-${{ github.run_id }}
           path: logs/
           retention-days: 1
-
-  notify-on-action-or-failure:
-    name: Notify on Action or Failure
-    runs-on: ubuntu-latest
-    needs: [run-gas-bill-splitting, run-utility-bill-splitting]
-    # Always run to check output, even if jobs fail
-    if: always()
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: job-logs
-
-      - name: Check for alerts
-        id: check-status
-        run: |
-          ALERT_MESSAGE=""
-          SHOULD_ALERT=false
-
-          # Check for failures
-          if [ "${{ needs.run-gas-bill-splitting.result }}" = "failure" ]; then
-            ALERT_MESSAGE="${ALERT_MESSAGE}Gas Bill Splitting: FAILED"$'\n'
-            SHOULD_ALERT=true
-          fi
-
-          if [ "${{ needs.run-utility-bill-splitting.result }}" = "failure" ]; then
-            ALERT_MESSAGE="${ALERT_MESSAGE}Utility Bill Splitting: FAILED"$'\n'
-            SHOULD_ALERT=true
-          fi
-
-          # Check for Venmo success in logs
-          if grep -r "AUTO_ALERT_VENMO_SUCCESS" job-logs/ 2>/dev/null; then
-            ALERT_MESSAGE="${ALERT_MESSAGE}✓ Venmo transaction created successfully"$'\n'
-            SHOULD_ALERT=true
-          fi
-
-          echo "should_alert=$SHOULD_ALERT" >> $GITHUB_OUTPUT
-          echo "message<<EOF" >> $GITHUB_OUTPUT
-          echo "$ALERT_MESSAGE" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
-
-      - name: Checkout for scripts
-        uses: actions/checkout@v4
-
-      - name: Send Discord notification
-        if: steps.check-status.outputs.should_alert == 'true'
-        run: .github/scripts/notify-discord.sh "${{ steps.check-status.outputs.message }}" "${{ steps.check-status.outputs.run_url }}" "${{ secrets.DISCORD_WEBHOOK_URL }}"
