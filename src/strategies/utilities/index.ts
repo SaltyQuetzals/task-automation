@@ -1,4 +1,4 @@
-import type { Strategy } from "../types";
+import type { Strategy } from "..";
 import computeBill from "./compute-bill";
 
 const UtilitiesStrategy: Strategy = {

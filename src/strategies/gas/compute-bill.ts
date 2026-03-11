@@ -1,8 +1,8 @@
 import { ImapFlow } from "imapflow";
 import { simpleParser } from "mailparser";
-import type { Bill, Cents } from "../types";
+import type { Bill, Cents } from "../../types";
 import { Temporal } from "temporal-polyfill";
-import { env } from "../env";
+import { env } from "../../env";
 
 // We use IMAP instead of Playwright because TGS has anti-botting
 // in place with reCaptcha. So we look at my Gmail inbox instead,
