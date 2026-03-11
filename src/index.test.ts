@@ -146,3 +146,60 @@ test("bill due exactly today: treated as past due", async () => {
   expect(mockRetrieveYNABTransaction).toHaveBeenCalledTimes(1);
   expect(mockRetrieveScheduledYNABTransaction).not.toHaveBeenCalled();
 });
+
+// --- updateExternalSources ---
+
+test("updateExternalSources: bill not yet due → no Venmo request sent", async () => {
+  const bill = makeBill(FUTURE_DATE);
+  mockRetrieveScheduledYNABTransaction.mockResolvedValue(makeScheduledTransaction());
+
+  await updateExternalSources(mockVenmoClient, mockYnabAPI, bill, makeStrategy(), TODAY);
+
+  expect(mockFindLatestChargeRequest).not.toHaveBeenCalled();
+  expect(mockSendPaymentRequest).not.toHaveBeenCalled();
+});
+
+test("updateExternalSources: bill past due, no existing request → sends Venmo request", async () => {
+  const bill = makeBill(PAST_DATE);
+  mockRetrieveYNABTransaction.mockResolvedValue(makeTransaction([{ id: "sub-1" }]));
+  mockFindLatestChargeRequest.mockResolvedValue(null);
+  mockSendPaymentRequest.mockResolvedValue("txn-venmo-1");
+
+  await updateExternalSources(mockVenmoClient, mockYnabAPI, bill, makeStrategy(), TODAY);
+
+  expect(mockSendPaymentRequest).toHaveBeenCalledTimes(1);
+});
+
+test("updateExternalSources: bill past due → Venmo request uses reimbursement cents converted to dollars", async () => {
+  const bill = makeBill(PAST_DATE);
+  mockRetrieveYNABTransaction.mockResolvedValue(makeTransaction([{ id: "sub-1" }]));
+  mockFindLatestChargeRequest.mockResolvedValue(null);
+  mockSendPaymentRequest.mockResolvedValue("txn-venmo-1");
+
+  await updateExternalSources(mockVenmoClient, mockYnabAPI, bill, makeStrategy(), TODAY);
+
+  const reimbursementDollars = bill.splitsCents[YNABCategory.Reimbursements] / 100;
+  expect(mockSendPaymentRequest).toHaveBeenCalledWith(expect.any(String), reimbursementDollars, expect.any(String));
+});
+
+test("updateExternalSources: bill past due → Venmo request uses note from strategy", async () => {
+  const bill = makeBill(PAST_DATE);
+  const NOTE = "Gas bill for March";
+  mockRetrieveYNABTransaction.mockResolvedValue(makeTransaction([{ id: "sub-1" }]));
+  mockFindLatestChargeRequest.mockResolvedValue(null);
+  mockSendPaymentRequest.mockResolvedValue("txn-venmo-1");
+
+  await updateExternalSources(mockVenmoClient, mockYnabAPI, bill, makeStrategy(NOTE), TODAY);
+
+  expect(mockSendPaymentRequest).toHaveBeenCalledWith(expect.any(String), expect.any(Number), NOTE);
+});
+
+test("updateExternalSources: bill past due, existing Venmo request found → no duplicate sent", async () => {
+  const bill = makeBill(PAST_DATE);
+  mockRetrieveYNABTransaction.mockResolvedValue(makeTransaction([{ id: "sub-1" }]));
+  mockFindLatestChargeRequest.mockResolvedValue({ id: "existing-charge" });
+
+  await updateExternalSources(mockVenmoClient, mockYnabAPI, bill, makeStrategy(), TODAY);
+
+  expect(mockSendPaymentRequest).not.toHaveBeenCalled();
+});

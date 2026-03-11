@@ -13,13 +13,13 @@ export enum YNABCategory {
 }
 
 export const CATEGORY_MAPPING: Record<YNABCategory, string> = {
-  [YNABCategory.CleanCommunityService]: env.YNAB_CATEGORY_CLEAN_COMMUNITY_SERVICE,
-  [YNABCategory.StreetService]: env.YNAB_CATEGORY_STREET_SERVICE,
-  [YNABCategory.DrainageService]: env.YNAB_CATEGORY_DRAINAGE_SERVICE,
-  [YNABCategory.SolidWasteServices]: env.YNAB_CATEGORY_SOLID_WASTE_SERVICES,
-  [YNABCategory.Water]: env.YNAB_CATEGORY_WATER,
-  [YNABCategory.Electric]: env.YNAB_CATEGORY_ELECTRIC,
-  [YNABCategory.Wastewater]: env.YNAB_CATEGORY_WASTEWATER,
-  [YNABCategory.Gas]: env.YNAB_CATEGORY_GAS,
-  [YNABCategory.Reimbursements]: env.YNAB_CATEGORY_REIMBURSEMENTS,
+  [YNABCategory.CleanCommunityService]: env.YNAB_CLEAN_COMMUNITY_SERVICE_CATEGORY_ID,
+  [YNABCategory.StreetService]: env.YNAB_STREET_SERVICE_CATEGORY_ID,
+  [YNABCategory.DrainageService]: env.YNAB_DRAINAGE_SERVICE_CATEGORY_ID,
+  [YNABCategory.SolidWasteServices]: env.YNAB_SOLID_WASTE_SERVICES_CATEGORY_ID,
+  [YNABCategory.Water]: env.YNAB_WATER_CATEGORY_ID,
+  [YNABCategory.Electric]: env.YNAB_ELECTRIC_CATEGORY_ID,
+  [YNABCategory.Wastewater]: env.YNAB_WASTEWATER_CATEGORY_ID,
+  [YNABCategory.Gas]: env.YNAB_GAS_CATEGORY_ID,
+  [YNABCategory.Reimbursements]: env.YNAB_REIMBURSEMENT_CATEGORY_ID,
 };

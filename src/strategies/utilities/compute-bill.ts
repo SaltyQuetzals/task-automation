@@ -170,7 +170,7 @@ export default async (): Promise<Bill> => {
         env.COA_UTILITIES_PASSWORD,
     );
     const firstPage = await extractFirstPage(uint8buf.buffer);
-    const extracted = await extractBillData(env.GOOGLE_GEN_AI_API_KEY, firstPage, allowedUtilityCategories);
+    const extracted = await extractBillData(env.GOOGLE_API_KEY, firstPage, allowedUtilityCategories);
 
     const totalCents = Object.values(extracted.splits).reduce((acc, val) => acc + val, 0) as Cents;
     return {

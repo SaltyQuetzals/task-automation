@@ -35,7 +35,7 @@ export const createScheduledYNABTransaction = async (ynabAPI: ynab.API, bill: Bi
   const createResponse = await ynabAPI.scheduledTransactions.createScheduledTransaction("last-used", {
     scheduled_transaction: {
       payee_name: payee.toLocaleUpperCase(),
-      account_id: env.YNAB_ACCOUNT,
+      account_id: env.YNAB_ACCOUNT_ID,
       date: bill.dueDate.toString(),
       amount: bill.totalCents * 10, // YNAB uses milliunits, not cents
       frequency: 'never',
@@ -51,7 +51,7 @@ export const createSplitYNABTransaction = async (ynabAPI: ynab.API, bill: Bill, 
   const createResponse = await ynabAPI.transactions.createTransaction("last-used", {
     transaction: {
       payee_name: payee.toLocaleUpperCase(),
-      account_id: env.YNAB_ACCOUNT,
+      account_id: env.YNAB_ACCOUNT_ID,
       date: bill.dueDate.toString(),
       amount: bill.totalCents * 10, // YNAB uses milliunits, not cents
       subtransactions: Object.entries(bill.splitsCents).map(([key, cents]) => ({

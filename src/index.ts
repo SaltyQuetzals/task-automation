@@ -42,14 +42,14 @@ export const createVenmoRequest = async (venmoClient: VenmoClient, reimbursement
   // Venmo expects dollars, not cents
   const reimbursementDollars = reimbursementCents / 100;
 
-  const existingRequest = await venmoClient.findLatestChargeRequest(env.ROOMMATE_USER_ID, reimbursementDollars, note);
+  const existingRequest = await venmoClient.findLatestChargeRequest(env.VENMO_RECIPIENT_USER_ID, reimbursementDollars, note);
 
   if (existingRequest !== null) {
     console.log('Request has already been made previously. Exiting early to avoid duplicate charge request.');
     return;
   }
 
-  await venmoClient.sendPaymentRequest(env.ROOMMATE_USER_ID, reimbursementDollars, note)
+  await venmoClient.sendPaymentRequest(env.VENMO_RECIPIENT_USER_ID, reimbursementDollars, note)
 }
 
 export const updateExternalSources = async (venmoClient: VenmoClient, ynabAPI: ynab.API, bill: Bill, strategy: Strategy, today: Temporal.PlainDate) => {
@@ -68,7 +68,7 @@ const workflow = async (mode: "gas" | "utilities") => {
   const bill = await strategy.computeBill();
 
   const venmoClient = new VenmoClient(env.VENMO_ACCESS_TOKEN, env.DRY_RUN);
-  const ynabAPI = new ynab.API(env.YNAB_API_TOKEN);
+  const ynabAPI = new ynab.API(env.YNAB_API_KEY);
   const today = Temporal.Now.plainDateISO(env.TZ);
 
   await updateExternalSources(venmoClient, ynabAPI, bill, strategy, today);
