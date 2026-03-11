@@ -11,11 +11,14 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@google/genai": "^1.44.0",
     "imapflow": "^1.2.13",
     "mailparser": "^3.9.4",
+    "pdf-lib": "^1.17.1",
     "playwright": "^1.58.2",
     "playwright-extra": "^4.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "ynab": "^4.0.0"
+    "ynab": "^4.0.0",
+    "zod": "^4.3.6"
   }
 }

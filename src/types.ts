@@ -1,7 +1,10 @@
-import type { CATEGORY_MAPPING } from "./categories";
+import { YNABCategory } from "./categories";
+
+export type Cents = number & { __brand: "Cents"; };
 
 export type Bill = {
   dueDate: string;
-  total: number;
-  splits?: Partial<Record<keyof typeof CATEGORY_MAPPING, number>>;
+  totalCents: Cents;
+  splitsCents: { [YNABCategory.Reimbursements]: Cents } & Partial<Record<YNABCategory, Cents>>;
 };
+

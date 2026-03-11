@@ -1,4 +1,5 @@
 import computeGasBill from "./compute-gas-bill";
+import computeUtilitiesBill from "./compute-utilities-bill";
 import type { Bill } from "./types";
 
 const [, , command] = process.argv;
@@ -11,17 +12,13 @@ const isMode = (val: string): val is Mode => {
 
 const STRATEGIES: Record<Mode, () => Promise<Bill>> = {
   gas: computeGasBill,
-  utilities: async () => {
-    return {
-      dueDate: "",
-      total: 0,
-    } satisfies Bill;
-  },
+  utilities: computeUtilitiesBill,
 };
 
 const workflow = async (mode: Mode) => {
-  const pdfDownloadStrategy = STRATEGIES[mode];
-  await pdfDownloadStrategy();
+  const billCalculationStrategy = STRATEGIES[mode];
+  const bill = await billCalculationStrategy();
+  console.log('bill =', bill);
 };
 
 const main = async () => {

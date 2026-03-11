@@ -1,15 +1,23 @@
-export const CATEGORY_MAPPING = {
-  "Rent/Mortgage": process.env.YNAB_CATEGORY_RENT_MORTGAGE!,
-  "Clean Community Service": process.env.YNAB_CATEGORY_CLEAN_COMMUNITY_SERVICE!,
-  "Heidi Food": process.env.YNAB_CATEGORY_HEIDI_FOOD!,
-  "Heidi Vet/Bills": process.env.YNAB_CATEGORY_HEIDI_VET_BILLS!,
-  Internet: process.env.YNAB_CATEGORY_INTERNET!,
-  "Street Service": process.env.YNAB_CATEGORY_STREET_SERVICE!,
-  "Drainage Service": process.env.YNAB_CATEGORY_DRAINAGE_SERVICE!,
-  "Solid Waste Services": process.env.YNAB_CATEGORY_SOLID_WASTE_SERVICES!,
-  Water: process.env.YNAB_CATEGORY_WATER!,
-  Electric: process.env.YNAB_CATEGORY_ELECTRIC!,
-  Wastewater: process.env.YNAB_CATEGORY_WASTEWATER!,
-  Gas: process.env.YNAB_CATEGORY_GAS!,
-  Reimbursements: process.env.YNAB_CATEGORY_REIMBURSEMENTS!,
+export enum YNABCategory {
+  CleanCommunityService = "Clean Community Service",
+  StreetService = "Street Service",
+  DrainageService = "Drainage Service",
+  SolidWasteServices = "Solid Waste Services",
+  Water = "Water",
+  Electric = "Electric",
+  Wastewater = "Wastewater",
+  Gas = "Gas",
+  Reimbursements = "Reimbursements",
+}
+
+export const CATEGORY_MAPPING: Record<YNABCategory, string> = {
+  [YNABCategory.CleanCommunityService]: process.env.YNAB_CATEGORY_CLEAN_COMMUNITY_SERVICE!,
+  [YNABCategory.StreetService]: process.env.YNAB_CATEGORY_STREET_SERVICE!,
+  [YNABCategory.DrainageService]: process.env.YNAB_CATEGORY_DRAINAGE_SERVICE!,
+  [YNABCategory.SolidWasteServices]: process.env.YNAB_CATEGORY_SOLID_WASTE_SERVICES!,
+  [YNABCategory.Water]: process.env.YNAB_CATEGORY_WATER!,
+  [YNABCategory.Electric]: process.env.YNAB_CATEGORY_ELECTRIC!,
+  [YNABCategory.Wastewater]: process.env.YNAB_CATEGORY_WASTEWATER!,
+  [YNABCategory.Gas]: process.env.YNAB_CATEGORY_GAS!,
+  [YNABCategory.Reimbursements]: process.env.YNAB_CATEGORY_REIMBURSEMENTS!,
 };
