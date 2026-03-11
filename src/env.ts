@@ -1,12 +1,14 @@
 import { z } from "zod";
 
 const envSchema = z.object({
+  DRY_RUN: z.boolean().default(true),
   TZ: z.string().min(1),
   GMAIL_USER: z.email(),
   GMAIL_APP_PASSWORD: z.string().min(1),
   COA_UTILITIES_EMAIL: z.email(),
   COA_UTILITIES_PASSWORD: z.string().min(1),
   GOOGLE_GEN_AI_API_KEY: z.string().min(1),
+  ROOMMATE_USER_ID: z.string().min(1),
   VENMO_ACCESS_TOKEN: z.string().min(1),
   YNAB_CATEGORY_CLEAN_COMMUNITY_SERVICE: z.string().min(1),
   YNAB_CATEGORY_STREET_SERVICE: z.string().min(1),

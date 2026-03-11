@@ -3,6 +3,7 @@ import { Temporal } from "temporal-polyfill";
 import type { Bill } from "./types";
 import { YNABCategory } from "./categories";
 import type { TransactionDetail, ScheduledTransactionDetail } from "ynab";
+import type { Strategy } from "./strategies";
 
 // Mock the ynab module helpers before importing updateYNAB
 const mockRetrieveScheduledYNABTransaction = mock();
@@ -15,9 +16,10 @@ mock.module("./ynab", () => ({
   createScheduledYNABTransaction: mockCreateScheduledYNABTransaction,
   retrieveYNABTransaction: mockRetrieveYNABTransaction,
   createSplitYNABTransaction: mockCreateSplitYNABTransaction,
+  isScheduledTransaction: (txn: any) => "date_next" in txn,
 }));
 
-const { updateYNAB } = await import("./index");
+const { updateYNAB, updateExternalSources } = await import("./index");
 
 const PAYEE = "test payee";
 const TODAY = Temporal.PlainDate.from("2026-03-11");
@@ -37,7 +39,7 @@ const makeTransaction = (subtransactions: unknown[] = []): TransactionDetail =>
   ({ id: "txn-1", subtransactions, payee_name: PAYEE, date: PAST_DATE.toString(), memo: "Automatically Created" } as unknown as TransactionDetail);
 
 const makeScheduledTransaction = (): ScheduledTransactionDetail =>
-  ({ id: "sched-1", payee_name: PAYEE } as unknown as ScheduledTransactionDetail);
+  ({ id: "sched-1", date_next: FUTURE_DATE.toString(), payee_name: PAYEE } as unknown as ScheduledTransactionDetail);
 
 const mockYnabAPI = {
   transactions: {
@@ -45,12 +47,27 @@ const mockYnabAPI = {
   },
 } as any;
 
+const mockFindLatestChargeRequest = mock();
+const mockSendPaymentRequest = mock();
+const mockVenmoClient = {
+  findLatestChargeRequest: mockFindLatestChargeRequest,
+  sendPaymentRequest: mockSendPaymentRequest,
+} as any;
+
+const makeStrategy = (note = "Test note"): Strategy => ({
+  computeBill: mock(),
+  ynabPayee: PAYEE,
+  note: () => note,
+});
+
 beforeEach(() => {
   mockRetrieveScheduledYNABTransaction.mockReset();
   mockCreateScheduledYNABTransaction.mockReset();
   mockRetrieveYNABTransaction.mockReset();
   mockCreateSplitYNABTransaction.mockReset();
   mockYnabAPI.transactions.deleteTransaction.mockReset();
+  mockFindLatestChargeRequest.mockReset();
+  mockSendPaymentRequest.mockReset();
 });
 
 // --- Bill not yet due ---

@@ -5,6 +5,7 @@ import UtilitiesStrategy from "./utilities";
 export type Strategy = {
     computeBill: () => Promise<Bill>;
     ynabPayee: string;
+    note: (bill: Bill) => string;
 }
 
 type Mode = "gas" | "utilities";

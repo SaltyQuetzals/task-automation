@@ -3,6 +3,12 @@ import type { Bill, Cents } from "./types";
 import { env } from "./env";
 import { CATEGORY_MAPPING, YNABCategory } from "./categories";
 
+export const isScheduledTransaction = (
+  txn: ynab.ScheduledTransactionDetail | ynab.TransactionDetail
+): txn is ynab.ScheduledTransactionDetail => {
+  return "date_next" in txn;
+};
+
 export const retrieveYNABTransaction = async (ynabAPI: ynab.API, bill: Bill, payee: string, memo: string) => {
   const response = await ynabAPI.transactions.getTransactions("last-used");
   const transactions = response.data.transactions;

@@ -1,4 +1,4 @@
-import { VenmoResponseSchema, type VenmoRequestPayload } from "./types";
+import { VenmoChargeRecordSchema, VenmoResponseSchema, type VenmoChargeRecord, type VenmoRequestPayload } from "./types";
 
 /**
  * Client for Venmo API 
@@ -78,6 +78,39 @@ export class VenmoClient {
    * @param note - Payment note
    * @returns Formatted request payload
    */
+  /**
+   * Find the most recent charge request matching a given recipient, amount, and note
+   * @param recipientUserId - Venmo user ID of the recipient
+   * @param amount - Amount in dollars
+   * @param note - Payment note to match (case-insensitive)
+   * @returns The matching charge record, or null if not found
+   */
+  async findLatestChargeRequest(recipientUserId: string, amount: number, note: string): Promise<VenmoChargeRecord | null> {
+    const response = await this.fetchFn(
+      "https://api.venmo.com/v1/payments?action=charge&count=50",
+      { headers: { Authorization: `Bearer ${this.accessToken}` } }
+    );
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Venmo API returned ${response.status}: ${errorBody || response.statusText}`);
+    }
+
+    const data = await response.json() as { data: unknown[] };
+    const charges = data.data
+      .map((item) => VenmoChargeRecordSchema.safeParse(item))
+      .filter((r) => r.success)
+      .map((r) => r.data);
+
+    const normalizedNote = note.toLowerCase();
+    return charges.find(
+      (c) =>
+        c.target.user?.id === recipientUserId &&
+        c.amount === amount &&
+        c.note.toLowerCase() === normalizedNote
+    ) ?? null;
+  }
+
   private buildPayload(recipientUserId: string, amount: number, note: string): VenmoRequestPayload {
     return {
       user_id: recipientUserId,
