@@ -123,5 +123,6 @@ const main = async () => {
 };
 
 if (import.meta.main) {
-  main();
+  await main();
+  process.exit(0);
 }
