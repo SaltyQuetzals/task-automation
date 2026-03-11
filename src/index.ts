@@ -17,8 +17,9 @@ export const updateYNAB = async (ynabAPI: ynab.API, payee: string, bill: Bill, t
     if (txn === null) {
       console.log('Did not find scheduled YNAB transaction. Creating...');
       txn = await createScheduledYNABTransaction(ynabAPI, bill, payee, MEMO);
+      return { txn, ynabUpdated: true };
     }
-    return txn;
+    return { txn, ynabUpdated: false };
   }
 
   // Due date has passed. We assume autopay worked, so check YNAB for an existing
@@ -28,15 +29,17 @@ export const updateYNAB = async (ynabAPI: ynab.API, payee: string, bill: Bill, t
   if (txn === null) {
     console.log('Did not find matching split YNAB transaction. Creating...');
     txn = await createSplitYNABTransaction(ynabAPI, bill, payee, MEMO);
+    return { txn, ynabUpdated: true };
   }
 
   if (txn.subtransactions.length === 0) {
     console.log('Found matching YNAB transaction, but no splits were attached. Replacing with split transaction...');
     await ynabAPI.transactions.deleteTransaction("last-used", txn.id);
     txn = await createSplitYNABTransaction(ynabAPI, bill, payee, MEMO);
+    return { txn, ynabUpdated: true };
   }
 
-  return txn;
+  return { txn, ynabUpdated: false };
 }
 
 export const createVenmoRequest = async (venmoClient: VenmoClient, reimbursementCents: Cents, note: string): Promise<'venmo-sent' | 'venmo-skipped'> => {
@@ -54,15 +57,16 @@ export const createVenmoRequest = async (venmoClient: VenmoClient, reimbursement
   return 'venmo-sent';
 }
 
-export const updateExternalSources = async (venmoClient: VenmoClient, ynabAPI: ynab.API, bill: Bill, strategy: Strategy, today: Temporal.PlainDate): Promise<'scheduled' | 'venmo-sent' | 'venmo-skipped'> => {
-  const txn = await updateYNAB(ynabAPI, strategy.ynabPayee, bill, today);
+export const updateExternalSources = async (venmoClient: VenmoClient, ynabAPI: ynab.API, bill: Bill, strategy: Strategy, today: Temporal.PlainDate) => {
+  const { txn, ynabUpdated } = await updateYNAB(ynabAPI, strategy.ynabPayee, bill, today);
 
   if (isScheduledTransaction(txn)) {
     console.log('Due date has yet to pass. No Venmo needed. Exiting.')
-    return 'scheduled';
+    return { status: 'scheduled' as const, ynabUpdated };
   };
 
-  return createVenmoRequest(venmoClient, bill.splitsCents.Reimbursements, strategy.note(bill));
+  const status = await createVenmoRequest(venmoClient, bill.splitsCents.Reimbursements, strategy.note(bill));
+  return { status, ynabUpdated };
 }
 
 const workflow = async (mode: "gas" | "utilities") => {
@@ -73,8 +77,8 @@ const workflow = async (mode: "gas" | "utilities") => {
   const ynabAPI = new ynab.API(env.YNAB_API_KEY);
   const today = Temporal.Now.plainDateISO(env.TZ);
 
-  const status = await updateExternalSources(venmoClient, ynabAPI, bill, strategy, today);
-  return { bill, status };
+  const { status, ynabUpdated } = await updateExternalSources(venmoClient, ynabAPI, bill, strategy, today);
+  return { bill, status, ynabUpdated };
 };
 
 const [, , command] = process.argv;
@@ -89,18 +93,30 @@ const main = async () => {
     );
   }
 
+  const label = command === 'gas' ? 'Gas' : 'Utilities';
+
   try {
-    const { bill, status } = await workflow(command);
-    const totalDollars = (bill.totalCents / 100).toFixed(2);
-    const reimbursementDollars = (bill.splitsCents.Reimbursements / 100).toFixed(2);
+    const { bill, status, ynabUpdated } = await workflow(command);
+
+    if (!ynabUpdated && status !== 'venmo-sent') {
+      console.log('Nothing to report — no changes made.');
+      return;
+    }
+    const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+    const statusLabel = {
+      'scheduled': 'Scheduled (bill not yet due)',
+      'venmo-sent': 'Venmo request sent',
+      'venmo-skipped': 'Venmo request already exists — skipped',
+    }[status];
     const message = [
-      `✅ **${command} run succeeded**`,
-      `Due: ${bill.dueDate}  |  Total: $${totalDollars}  |  Reimbursement: $${reimbursementDollars}`,
-      `Status: ${status}`,
+      `✅ **${label} bill run succeeded**`,
+      `**Due:** ${bill.dueDate} | **Total:** ${fmt(bill.totalCents)} | **Reimbursement:** ${fmt(bill.splitsCents.Reimbursements)}`,
+      `**Status:** ${statusLabel}`,
     ].join('\n');
     await sendDiscordNotification(env.DISCORD_WEBHOOK_URL, message, true);
   } catch (err) {
-    const message = `❌ **${command} run failed**\n${err instanceof Error ? err.message : String(err)}`;
+    const detail = err instanceof Error ? err.message : String(err);
+    const message = `❌ **${label} bill run failed**\n\`\`\`\n${detail}\n\`\`\``;
     await sendDiscordNotification(env.DISCORD_WEBHOOK_URL, message, false);
     process.exit(1);
   }
