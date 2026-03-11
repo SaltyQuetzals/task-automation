@@ -1,5 +1,5 @@
 import * as ynab from "ynab";
-import type { Bill, Cents } from "./types";
+import type { Bill } from "./types";
 import { env } from "./env";
 import { CATEGORY_MAPPING, YNABCategory } from "./categories";
 
