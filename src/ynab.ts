@@ -14,7 +14,7 @@ export const retrieveYNABTransaction = async (ynabAPI: ynab.API, bill: Bill, pay
   const transactions = response.data.transactions;
 
   const filtered = transactions
-    .filter(t => t.payee_name?.toLocaleLowerCase().includes(payee) && t.date === bill.dueDate.toString() && t.memo === memo && t.amount === -bill.totalCents * 10)
+    .filter(t => t.payee_name?.toLocaleLowerCase().includes(payee.toLocaleLowerCase()) && t.date === bill.dueDate.toString() && t.memo === memo && t.amount === -bill.totalCents * 10)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return filtered[0] ?? null;
@@ -25,7 +25,7 @@ export const retrieveScheduledYNABTransaction = async (ynabAPI: ynab.API, bill: 
   const transactions = response.data.scheduled_transactions;
 
   const filtered = transactions
-    .filter(t => t.payee_name?.toLocaleLowerCase().includes(payee) && t.date_next === bill.dueDate.toString() && t.memo === memo && t.amount === -bill.totalCents * 10).sort((a, b) => new Date(b.date_next).getTime() - new Date(a.date_next).getTime());
+    .filter(t => t.payee_name?.toLocaleLowerCase().includes(payee.toLocaleLowerCase()) && t.date_next === bill.dueDate.toString() && t.memo === memo && t.amount === -bill.totalCents * 10).sort((a, b) => new Date(b.date_next).getTime() - new Date(a.date_next).getTime());
 
   return filtered[0] ?? null;
 }
